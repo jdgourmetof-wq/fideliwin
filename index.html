@@ -4,16 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#C92D63">
-<title>FideliWin</title>
+<title>JD Gourmet</title>
+<link rel="icon" href="logo-icone.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: página do cliente centrada como um cartão de bolso; painel com abas no topo, PDV em duas colunas no desktop e empilhado no celular. */
 :root{
-  --bg:#FBF5F7; --surface:#FFFFFF; --sunk:#F4EAEE; --ink:#2A1820; --muted:#76606A; --line:#EADCE2;
-  --accent:#C92D63; --accent-ink:#FFFFFF; --accent-soft:#FBE3EC;
-  --stamp:#F4B400; --stamp-soft:#FFF2C9; --stamp-ink:#5A3D00;
+  --bg:#FFF6F9; --surface:#FFFFFF; --sunk:#FBEAF0; --ink:#2E0F1C; --muted:#7A5866; --line:#F3D6E1;
+  --accent:#D60F5A; --accent-ink:#FFFFFF; --accent-soft:#FDE0EA;
+  --stamp:#E0115F; --stamp-soft:#FDE0EA; --stamp-ink:#A00B45; --brand-bg:#FDD3DD;
   --good:#1D7F53; --good-soft:#DDF3E8; --warn:#A86200; --warn-soft:#FDEBD0; --bad:#B42318; --bad-soft:#FDE2DF;
   --shadow:0 1px 2px rgba(60,20,35,.06),0 4px 16px rgba(60,20,35,.06);
   --f-display:"Baloo 2",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;
@@ -21,15 +22,15 @@
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#171014; --surface:#22181D; --sunk:#1C1418; --ink:#F6ECF0; --muted:#B49DA7; --line:#3A2A31;
-  --accent:#FF5A92; --accent-ink:#2A0B17; --accent-soft:#3D1A28;
-  --stamp:#FFC83A; --stamp-soft:#3A2E10; --stamp-ink:#FFE7A6;
+  --bg:#1A0E14; --surface:#25141D; --sunk:#1F1118; --ink:#FBEFF4; --muted:#C6A3B3; --line:#43263A;
+  --accent:#FF5C95; --accent-ink:#2A0714; --accent-soft:#45192E;
+  --stamp:#FF5C95; --stamp-soft:#45192E; --stamp-ink:#FFB8D0;
   --good:#4CC98E; --good-soft:#143326; --warn:#F2A845; --warn-soft:#3A2A12; --bad:#FF7A6B; --bad-soft:#3D1A17;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#171014; --surface:#22181D; --sunk:#1C1418; --ink:#F6ECF0; --muted:#B49DA7; --line:#3A2A31;
-  --accent:#FF5A92; --accent-ink:#2A0B17; --accent-soft:#3D1A28;
-  --stamp:#FFC83A; --stamp-soft:#3A2E10; --stamp-ink:#FFE7A6;
+  --bg:#1A0E14; --surface:#25141D; --sunk:#1F1118; --ink:#FBEFF4; --muted:#C6A3B3; --line:#43263A;
+  --accent:#FF5C95; --accent-ink:#2A0714; --accent-soft:#45192E;
+  --stamp:#FF5C95; --stamp-soft:#45192E; --stamp-ink:#FFB8D0;
   --good:#4CC98E; --good-soft:#143326; --warn:#F2A845; --warn-soft:#3A2A12; --bad:#FF7A6B; --bad-soft:#3D1A17;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}
 
@@ -76,6 +77,16 @@ a{color:var(--accent)}
 .empty{padding:28px 16px;text-align:center;color:var(--muted)}
 .demo-bar{background:var(--stamp-soft);color:var(--stamp-ink);font-size:13px;padding:8px 16px;text-align:center}
 
+/* ---------- Logo ---------- */
+.hero-logo{position:relative;background:var(--brand-bg);border-radius:28px;padding:14px 18px 10px;display:grid;place-items:center;overflow:hidden;box-shadow:0 10px 30px -12px rgba(214,15,90,.45)}
+.top-logo{background:var(--brand-bg);border-radius:14px;padding:3px 10px;display:flex;align-items:center}
+.top-logo img{height:50px;width:auto;display:block}
+.hero-logo img{position:relative;width:100%;max-width:400px;height:auto;display:block;animation:pop .6s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.92);opacity:.6}to{transform:none;opacity:1}}
+.brand-icon{width:44px;height:44px;border-radius:12px;display:block;flex:none;box-shadow:0 2px 8px -2px rgba(214,15,90,.4)}
+.login-logo{background:var(--brand-bg);border-radius:20px;padding:10px;display:grid;place-items:center}
+.login-logo img{width:100%;max-width:300px;height:auto}
+
 /* ---------- Página do cliente ---------- */
 .cli{min-height:100%;padding-block:28px 40px}
 .cli-inner{max-width:460px;margin:0 auto;padding-inline:16px;display:flex;flex-direction:column;gap:18px}
@@ -91,11 +102,14 @@ a{color:var(--accent)}
 .loyal-head h2{font-size:24px}
 .stamps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .selo{aspect-ratio:1;max-width:100%;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-weight:700;font-size:13px;position:relative}
-.selo.on{border:0;background:var(--stamp);color:var(--stamp-ink)}
+.selo.on{border:0;background:var(--stamp);color:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
 .selo.on svg{width:42%;height:auto}
+.selo.gift{background:var(--brand-bg);border-style:solid}
+.selo.gift svg{width:46%}
 .selo.gift{border-color:var(--accent);color:var(--accent)}
 .selo.gift.on{background:var(--accent);color:var(--accent-ink)}
-.selo .gift-lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.selo .gift-lbl{font-size:9px;letter-spacing:.06em;text-transform:uppercase;line-height:1}
+.selo.gift:not(.on){display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center}
 .progress-text{font-size:17px;font-weight:600}
 .progress-text b{color:var(--accent);font-family:var(--f-display);font-size:22px}
 .reward{background:var(--accent);color:var(--accent-ink);border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center}
@@ -112,7 +126,7 @@ a{color:var(--accent)}
 
 /* ---------- Painel ---------- */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
-.top-row{display:flex;align-items:center;gap:14px;min-height:58px}
+.top-row{display:flex;align-items:center;gap:14px;min-height:66px}
 .top-row .brand-name{font-size:19px}
 .tabs-scroll{overflow-x:auto;scrollbar-width:none}
 .tabs-scroll::-webkit-scrollbar{display:none}
@@ -419,7 +433,7 @@ function seedDemo(){
   // um brinde já resgatado pela Ana
   const ana = clientes[0]; const anaSaldo = vendas.filter(v => v.cliente_id === ana.id).reduce((s,v)=>s+v.selos_ganhos,0);
   if (anaSaldo >= 10) { const p = produtos[0]; const w = new Date(); w.setDate(w.getDate()-3); vendas.push({ id:uid(), cliente_id:ana.id, criado_em:w.toISOString(), total:0, custo_total:p.custo, forma_pagamento:"Pix", selos_ganhos:0, selos_usados:10, cancelada:false, obs:null, itens:[{ id:uid(), produto_id:p.id, nome:p.nome, qtd:1, preco_unit:0, custo_unit:p.custo, brinde:true }] }); }
-  return { config:{ id:1, nome_loja:"JG Gourmet", valor_por_selo:10, selos_por_brinde:10 }, produtos, clientes, vendas, movimentos };
+  return { config:{ id:1, nome_loja:"JD Gourmet", valor_por_selo:10, selos_por_brinde:10 }, produtos, clientes, vendas, movimentos };
 }
 
 /* =====================================================================
@@ -444,12 +458,13 @@ async function copyText(txt){ try { await navigator.clipboard.writeText(txt); to
 function customerLink(){ const u = location.href.split("#")[0]; return u; }
 function stampsHTML(onCard, total){
   let h = ""; for (let i = 1; i <= total; i++) { const on = i <= onCard, last = i === total;
-    h += `<div class="selo ${on?"on":""} ${last?"gift":""}" aria-label="Selo ${i} ${on?"preenchido":"vazio"}">${on ? ICON_DINDIN : last ? `<span class="gift-lbl">Grátis</span>` : i}</div>`; }
+    h += `<div class="selo ${on?"on":""} ${last?"gift":""}" aria-label="Selo ${i} ${on?"preenchido":"vazio"}">${on ? ICON_DINDIN : last ? `${ICON_GIFT}<span class="gift-lbl">Grátis</span>` : i}</div>`; }
   return h;
 }
 function miniStamps(n, total){ let h = ""; for (let i = 0; i < total; i++) h += `<i class="${i < n ? "on":""}"></i>`; return `<span class="mini-stamps" aria-label="${n} de ${total} selos">${h}</span>`; }
 function stockPill(p){ if (p.estoque <= 0) return `<span class="pill bad">Esgotado</span>`; if (p.estoque <= p.estoque_minimo) return `<span class="pill warn">Baixo · ${p.estoque}</span>`; return `<span class="pill good">${p.estoque} un.</span>`; }
-function brandHTML(name){ return `<div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 40" width="14" aria-hidden="true"><use href="#i-dindin"/></svg></div><div class="brand-name">${esc(name)}</div></div>`; }
+function brandHTML(name){ return `<div class="brand"><img class="brand-icon" src="logo-icone.webp" alt="" width="44" height="44"><div class="brand-name">${esc(name)}</div></div>`; }
+const LOGO_HTML = `<div class="hero-logo"><img src="logo.webp" alt="JD Gourmet, dindin feito com amor" width="520" height="335"></div>`;
 
 /* =====================================================================
    PÁGINA DO CLIENTE
@@ -457,11 +472,9 @@ function brandHTML(name){ return `<div class="brand"><div class="brand-mark"><sv
 async function renderCliente(){
   const app = $("#app");
   const saved = store.get("dindin-tel") || "";
-  let nome_loja = "JG Gourmet";
-  try { if (DEMO) nome_loja = (await api.config()).nome_loja; } catch(e) {}
   app.innerHTML = `${DEMO ? `<div class="demo-bar">Modo demonstração com dados de exemplo. Teste com o telefone <b>(85) 98811-2233</b>.</div>` : ""}
   <main class="cli"><div class="cli-inner">
-    <div id="cli-brand">${brandHTML(nome_loja)}</div>
+    ${LOGO_HTML}
     <div id="cli-body"></div>
     <div class="foot"><a href="#painel">Área do vendedor</a><div style="margin-top:6px">FideliWin · um sistema Force Win</div></div>
   </div></main>`;
@@ -486,7 +499,6 @@ async function showCard(tel){
   const body = $("#cli-body");
   body.innerHTML = `<div class="loyal"><div class="empty">Buscando seu cartão…</div></div>`;
   let r; try { r = await api.consulta(tel); } catch(e) { showForm("Não foi possível consultar agora. Tente de novo."); return; }
-  if (r.nome_loja) $("#cli-brand").innerHTML = brandHTML(r.nome_loja);
   if (!r.encontrado) { store.del("dindin-tel"); showForm(`Não encontramos o número ${fmtPhone(tel)}. Peça para te cadastrar na próxima compra.`); return; }
   store.set("dindin-tel", tel);
   const total = r.selos_por_brinde, onCard = r.selos_no_cartao;
@@ -532,7 +544,7 @@ async function renderPainel(){
   const t = store.get("dindin-tab"); if (t && TABS.some(x => x[0] === t)) S.tab = t;
   app.innerHTML = `${DEMO ? `<div class="demo-bar">Modo demonstração: dados de exemplo salvos só neste navegador.</div>` : ""}
   <header class="top"><div class="wrap">
-    <div class="top-row"><div id="top-brand">${brandHTML("…")}</div><span style="flex:1"></span><a class="btn sm ghost" href="#">Página do cliente</a></div>
+    <div class="top-row"><div class="top-logo"><img src="logo.webp" alt="JD Gourmet" width="78" height="50"></div><div id="top-brand" class="hide-sm" style="display:none"></div><span style="flex:1"></span><a class="btn sm ghost" href="#">Página do cliente</a></div>
     <div class="tabs-scroll"><nav class="tabs" role="tablist">${TABS.map(([k,l]) => `<button class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}</button>`).join("")}</nav></div>
   </div></header>
   <main class="main"><div class="wrap" id="view"><div class="empty">Carregando…</div></div><div class="foot" style="margin-top:32px">FideliWin · um sistema Force Win · Do código à vitória.</div></main>
@@ -543,13 +555,12 @@ async function renderPainel(){
 }
 async function loadBase(){
   [S.cfg, S.produtos, S.clientes] = await Promise.all([api.config(), api.produtos(), api.clientes()]);
-  $("#top-brand").innerHTML = brandHTML(S.cfg.nome_loja);
 }
 function showTab(){ $("#mbar").innerHTML = ""; ({ vender:viewVender, vendas:viewVendas, clientes:viewClientes, estoque:viewEstoque, relatorios:viewRelatorios, ajustes:viewAjustes })[S.tab](); }
 
 function renderLogin(){
   $("#app").innerHTML = `<div class="login"><div class="card stack">
-    ${brandHTML("FideliWin")}<div class="muted small">Área do vendedor</div>
+    <div class="login-logo"><img src="logo.webp" alt="JD Gourmet" width="520" height="335"></div><div class="muted small" style="text-align:center">Área do vendedor · FideliWin</div>
     <form id="lf" class="stack">
       <div class="field"><label for="em">E-mail</label><input id="em" class="input" type="email" autocomplete="username" required></div>
       <div class="field"><label for="pw">Senha</label><input id="pw" class="input" type="password" autocomplete="current-password" required></div>
