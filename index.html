@@ -304,7 +304,7 @@ function makeRemoteApi(){
     async signOut(){ await sb.auth.signOut(); },
     async isAdmin(){ const s = await this.session(); if (!s) return false; const d = chk(await sb.from("admins").select("user_id").eq("user_id", s.user.id)); return d.length > 0; },
     async config(){ return chk(await sb.from("config").select("*").eq("id",1).single()); },
-    async salvarConfig(c){ chk(await sb.from("config").update({ nome_loja:c.nome_loja, valor_por_selo:c.valor_por_selo, selos_por_brinde:c.selos_por_brinde, atualizado_em:new Date().toISOString() }).eq("id",1)); },
+    async salvarConfig(c){ chk(await sb.from("config").update({ nome_loja:c.nome_loja, itens_por_selo:c.itens_por_selo, selos_por_brinde:c.selos_por_brinde, atualizado_em:new Date().toISOString() }).eq("id",1)); },
     async produtos(){ return chk(await sb.from("produtos").select("*").order("nome")); },
     async salvarProduto(p){
       const row = { nome:p.nome, preco:p.preco, custo:p.custo, estoque_minimo:p.estoque_minimo, ativo:p.ativo };
@@ -348,7 +348,7 @@ function makeLocalApi(){
     reset(){ db = seedDemo(); save(); },
     async session(){ return { demo:true }; }, async signIn(){}, async signOut(){}, async isAdmin(){ return true; },
     async config(){ await wait(); return { ...db.config }; },
-    async salvarConfig(c){ Object.assign(db.config, { nome_loja:c.nome_loja, valor_por_selo:+c.valor_por_selo, selos_por_brinde:+c.selos_por_brinde }); save(); },
+    async salvarConfig(c){ Object.assign(db.config, { nome_loja:c.nome_loja, itens_por_selo:+c.itens_por_selo, selos_por_brinde:+c.selos_por_brinde }); save(); },
     async produtos(){ await wait(); return db.produtos.map(p => ({...p})).sort((a,b) => a.nome.localeCompare(b.nome)); },
     async salvarProduto(p){
       if (p.id) { Object.assign(db.produtos.find(x => x.id === p.id), { nome:p.nome, preco:+p.preco, custo:+p.custo, estoque_minimo:+p.estoque_minimo, ativo:p.ativo }); }
@@ -389,7 +389,7 @@ function makeLocalApi(){
         itens.push({ id:uid(), produto_id:p.id, nome:p.nome, qtd:i.qtd, preco_unit:i.brinde?0:p.preco, custo_unit:p.custo, brinde:i.brinde });
         db.movimentos.push({ id:uid(), produto_id:p.id, tipo:"venda", qtd:-i.qtd, venda_id:id, obs:i.brinde?"Brinde fidelidade":null, criado_em:now });
         if (!i.brinde) total += p.preco*i.qtd; custo += p.custo*i.qtd; });
-      const sg = v.cliente_id ? Math.floor(total / cfg.valor_por_selo + 1e-9) : 0;
+      const qPagos = v.itens.reduce((s,i) => s + i.qtd, 0); const sg = v.cliente_id ? Math.floor(qPagos / (cfg.itens_por_selo || 2)) : 0;
       db.vendas.push({ id, cliente_id:v.cliente_id||null, criado_em:now, total, custo_total:custo, forma_pagamento:v.forma, selos_ganhos:sg, selos_usados:nB*cfg.selos_por_brinde, cancelada:false, obs:v.obs||null, itens });
       save();
       return { id, total, selos_ganhos:sg, selos_usados:nB*cfg.selos_por_brinde, saldo: v.cliente_id ? saldo(v.cliente_id) : null };
@@ -411,8 +411,8 @@ function makeLocalApi(){
       if (!c) return { encontrado:false, nome_loja:cfg.nome_loja };
       const s = Math.max(0, saldo(c.id));
       const compras = db.vendas.filter(v => v.cliente_id === c.id && !v.cancelada).sort((a,b) => b.criado_em.localeCompare(a.criado_em)).slice(0,30)
-        .map(v => ({ data:v.criado_em, total:v.total, selos_ganhos:v.selos_ganhos, selos_usados:v.selos_usados, itens:v.itens.map(i => ({nome:i.nome, qtd:i.qtd, brinde:i.brinde})) }));
-      return { encontrado:true, nome_loja:cfg.nome_loja, nome:c.nome.split(" ")[0], selos_por_brinde:cfg.selos_por_brinde, valor_por_selo:cfg.valor_por_selo, saldo:s,
+        .map(v => ({ data:v.criado_em, selos_ganhos:v.selos_ganhos, selos_usados:v.selos_usados, itens:v.itens.map(i => ({nome:i.nome, qtd:i.qtd, brinde:i.brinde})) }));
+      return { encontrado:true, nome_loja:cfg.nome_loja, nome:c.nome.split(" ")[0], selos_por_brinde:cfg.selos_por_brinde, itens_por_selo:cfg.itens_por_selo || 2, saldo:s,
         brindes_disponiveis:Math.floor(s/cfg.selos_por_brinde), selos_no_cartao:s % cfg.selos_por_brinde, faltam:cfg.selos_por_brinde - (s % cfg.selos_por_brinde), cliente_desde:c.criado_em, compras };
     },
   };
@@ -436,13 +436,13 @@ function seedDemo(){
       const itens = []; const m = 1 + Math.floor(rnd()*3);
       for (let j = 0; j < m; j++) { const p = produtos[Math.floor(rnd()*produtos.length)]; const ex = itens.find(i => i.produto_id === p.id); if (ex) ex.qtd++; else itens.push({ id:uid(), produto_id:p.id, nome:p.nome, qtd:1+Math.floor(rnd()*2), preco_unit:p.preco, custo_unit:p.custo, brinde:false }); }
       const total = itens.reduce((s,i)=>s+i.preco_unit*i.qtd,0), custo = itens.reduce((s,i)=>s+i.custo_unit*i.qtd,0);
-      vendas.push({ id:uid(), cliente_id:cli?cli.id:null, criado_em:when.toISOString(), total, custo_total:custo, forma_pagamento:formas[Math.floor(rnd()*formas.length)], selos_ganhos:cli?Math.floor(total/10):0, selos_usados:0, cancelada:false, obs:null, itens });
+      vendas.push({ id:uid(), cliente_id:cli?cli.id:null, criado_em:when.toISOString(), total, custo_total:custo, forma_pagamento:formas[Math.floor(rnd()*formas.length)], selos_ganhos:cli?Math.floor(itens.reduce((s,i)=>s+i.qtd,0)/2):0, selos_usados:0, cancelada:false, obs:null, itens });
     }
   }
   // um brinde já resgatado pela Ana
   const ana = clientes[0]; const anaSaldo = vendas.filter(v => v.cliente_id === ana.id).reduce((s,v)=>s+v.selos_ganhos,0);
   if (anaSaldo >= 10) { const p = produtos[0]; const w = new Date(); w.setDate(w.getDate()-3); vendas.push({ id:uid(), cliente_id:ana.id, criado_em:w.toISOString(), total:0, custo_total:p.custo, forma_pagamento:"Pix", selos_ganhos:0, selos_usados:10, cancelada:false, obs:null, itens:[{ id:uid(), produto_id:p.id, nome:p.nome, qtd:1, preco_unit:0, custo_unit:p.custo, brinde:true }] }); }
-  return { config:{ id:1, nome_loja:"JD Gourmet", valor_por_selo:10, selos_por_brinde:10 }, produtos, clientes, vendas, movimentos };
+  return { config:{ id:1, nome_loja:"JD Gourmet", itens_por_selo:2, selos_por_brinde:10 }, produtos, clientes, vendas, movimentos };
 }
 
 /* =====================================================================
@@ -494,7 +494,7 @@ function showForm(msg){
   $("#cli-body").innerHTML = `
     <div class="stack" style="gap:18px">
       <h1>Seu cartão <em>fidelidade</em></h1>
-      <p class="muted" style="margin:0">A cada R$ 10 em compras você ganha 1 selo. Completou o cartão, ganhou um dindin de presente.</p>
+      <p class="muted" style="margin:0">A cada 2 dindins comprados você ganha 1 selo. Completou o cartão, ganhou um dindin de presente.</p>
       <form class="phone-form" id="tel-form" novalidate>
         <label for="tel" class="small muted" style="font-weight:600">Seu número de WhatsApp</label>
         <input id="tel" class="input phone-input num" inputmode="tel" autocomplete="tel" placeholder="(85) 90000-0000">
@@ -512,7 +512,7 @@ async function showCard(tel){
   if (!r.encontrado) { store.del("dindin-tel"); showForm(`Não encontramos o número ${fmtPhone(tel)}. Peça para te cadastrar na próxima compra.`); return; }
   store.set("dindin-tel", tel);
   const total = r.selos_por_brinde, onCard = r.selos_no_cartao;
-  const faltaTxt = r.faltam === 1 ? `Falta <b>1</b> compra de ${money(r.valor_por_selo)} para seu dindin grátis` : `Faltam <b>${r.faltam}</b> compras de ${money(r.valor_por_selo)} para seu dindin grátis`;
+  const ips = r.itens_por_selo || 2; const faltaD = r.faltam * ips; const faltaTxt = r.faltam === 1 ? `Falta <b>1</b> selo para seu dindin grátis <span class="small muted">(${faltaD} dindins)</span>` : `Faltam <b>${r.faltam}</b> selos para seu dindin grátis <span class="small muted">(${faltaD} dindins)</span>`;
   body.innerHTML = `
     <div class="stack" style="gap:16px">
       <h1>Oi, <em>${esc(r.nome)}</em>!</h1>
@@ -521,14 +521,14 @@ async function showCard(tel){
         <div class="loyal-head"><h2>Cartão fidelidade</h2><span class="pill stamp num">${onCard}/${total} selos</span></div>
         <div class="stamps">${stampsHTML(onCard, total)}</div>
         <div class="progress-text">${faltaTxt}</div>
-        <div class="small muted">Cada ${money(r.valor_por_selo)} numa compra vale 1 selo. ${total} selos = 1 dindin de brinde.</div>
+        <div class="small muted">A cada ${ips} dindins comprados você ganha 1 selo. ${total} selos = 1 dindin de brinde.</div>
       </section>
       <section class="loyal" aria-label="Suas compras">
         <div class="loyal-head"><h2>Suas compras</h2><span class="small muted">${r.compras.length ? `${r.compras.length === 30 ? "últimas 30" : r.compras.length + (r.compras.length === 1 ? " compra" : " compras")}` : ""}</span></div>
         <div class="hist">${r.compras.length ? r.compras.map(c => `
           <div class="hist-item"><div style="min-width:0"><div class="when">${fmtDate(c.data)} · ${fmtTime(c.data)}</div>
             <div class="what">${(c.itens||[]).map(i => `${i.qtd}× ${esc(i.nome)}${i.brinde ? " (brinde)" : ""}`).join(", ")}</div></div>
-            <div class="right"><span class="num" style="font-weight:700">${money(c.total)}</span>
+            <div class="right"><span class="num" style="font-weight:700">${(c.itens||[]).filter(i=>!i.brinde).reduce((s,i)=>s+i.qtd,0) || (c.itens||[]).reduce((s,i)=>s+i.qtd,0)} ${((c.itens||[]).filter(i=>!i.brinde).reduce((s,i)=>s+i.qtd,0) || 1) === 1 ? "dindin" : "dindins"}</span>
             ${c.selos_usados ? `<span class="pill bad">Brinde usado</span>` : ""}${c.selos_ganhos ? `<span class="pill stamp">+${c.selos_ganhos} ${c.selos_ganhos===1?"selo":"selos"}</span>` : (!c.selos_usados ? `<span class="pill neutral">sem selo</span>` : "")}</div></div>`).join("") : `<div class="empty">Nenhuma compra ainda.</div>`}</div>
       </section>
       <div class="foot">Número ${fmtPhone(tel)} · <button id="trocar">Trocar número</button></div>
@@ -622,7 +622,7 @@ function addItem(pid){
 }
 function drawCart(){
   const el = $("#cart"); const c = clienteSel(); const { total, n, nb } = cartTotals(); const cfg = S.cfg;
-  const selosGanha = c ? Math.floor(total / cfg.valor_por_selo + 1e-9) : 0;
+  const selosGanha = c ? Math.floor(n / (cfg.itens_por_selo || 2)) : 0;
   const disp = brindesDisp();
   const lines = [
     ...Object.entries(S.cart.itens).map(([pid,q]) => ({ pid, q, brinde:false })),
@@ -646,7 +646,7 @@ function drawCart(){
       : `<div class="empty small">Toque nos sabores para adicionar.</div>`}</div>
     <div class="field"><label>Pagamento</label><div class="seg" id="pay">${["Pix","Dinheiro","Cartão"].map(f => `<button type="button" aria-pressed="${S.cart.forma===f}" data-f="${f}">${f}</button>`).join("")}</div></div>
     <div class="total-row"><span class="muted">Total</span><span class="v num">${money(total)}</span></div>
-    ${c ? `<div class="small" style="margin-top:-6px">${selosGanha ? `<span class="pill stamp">+${selosGanha} ${selosGanha===1?"selo":"selos"}</span> para ${esc(c.nome.split(" ")[0])} nesta compra` : `<span class="muted">Compras a partir de ${money(cfg.valor_por_selo)} ganham selo.</span>`}</div>` : (n ? `<div class="small muted" style="margin-top:-6px">Sem cliente: esta venda não gera selos.</div>` : "")}
+    ${c ? `<div class="small" style="margin-top:-6px">${selosGanha ? `<span class="pill stamp">+${selosGanha} ${selosGanha===1?"selo":"selos"}</span> para ${esc(c.nome.split(" ")[0])} nesta compra` : `<span class="muted">A cada ${cfg.itens_por_selo || 2} dindins a cliente ganha 1 selo.</span>`}</div>` : (n ? `<div class="small muted" style="margin-top:-6px">Sem cliente: esta venda não gera selos.</div>` : "")}
     <button class="btn primary block" id="fin" style="min-height:50px;font-size:16px" ${(n+nb)?"":"disabled"}>Finalizar venda</button>
     ${(n+nb) ? `<button class="btn ghost sm" id="limpar">Limpar pedido</button>` : ""}`;
 
@@ -921,9 +921,9 @@ function viewAjustes(){
   <div class="rep-grid">
     <form class="card stack" id="af" novalidate><h3>Loja e fidelidade</h3>
       <div class="field"><label for="a-nome">Nome da loja</label><input id="a-nome" class="input" value="${esc(c.nome_loja)}"></div>
-      <div class="grid2"><div class="field"><label for="a-vps">Valor para ganhar 1 selo (R$)</label><input id="a-vps" class="input num" inputmode="decimal" value="${String(c.valor_por_selo).replace(".",",")}"></div>
+      <div class="grid2"><div class="field"><label for="a-vps">Dindins para ganhar 1 selo</label><input id="a-vps" class="input num" inputmode="numeric" value="${c.itens_por_selo || 2}"></div>
       <div class="field"><label for="a-spb">Selos para ganhar 1 brinde</label><input id="a-spb" class="input num" inputmode="numeric" value="${c.selos_por_brinde}"></div></div>
-      <div class="small muted">Hoje: cada ${money(c.valor_por_selo)} numa compra vale 1 selo; ${c.selos_por_brinde} selos = 1 dindin grátis. Mudar a regra não altera selos já ganhos.</div>
+      <div class="small muted">Hoje: a cada ${c.itens_por_selo || 2} dindins comprados a cliente ganha 1 selo (brindes não contam); ${c.selos_por_brinde} selos = 1 dindin grátis. Mudar a regra não altera selos já ganhos.</div>
       <div><button class="btn primary" id="as">Salvar</button></div></form>
     <div class="card stack"><h3>Página do cliente</h3>
       <p class="muted" style="margin:0">Mande este link para seus clientes ou coloque na bio do Instagram. Eles entram com o número de WhatsApp cadastrado.</p>
@@ -934,9 +934,9 @@ function viewAjustes(){
              : `<div><button class="btn" id="out">Sair do painel</button></div>`}
     </div>
   </div>`;
-  $("#af").addEventListener("submit", e => { e.preventDefault(); const nome = $("#a-nome").value.trim(); const vps = parseFloat($("#a-vps").value.replace(",", ".")); const spb = parseInt($("#a-spb").value);
+  $("#af").addEventListener("submit", e => { e.preventDefault(); const nome = $("#a-nome").value.trim(); const vps = parseInt($("#a-vps").value); const spb = parseInt($("#a-spb").value);
     if (!nome || !(vps > 0) || !(spb > 0)) return toast("Confira os valores.", true);
-    busy($("#as"), async () => { await api.salvarConfig({ nome_loja:nome, valor_por_selo:vps, selos_por_brinde:spb }); await loadBase(); toast("Ajustes salvos"); viewAjustes(); }); });
+    busy($("#as"), async () => { await api.salvarConfig({ nome_loja:nome, itens_por_selo:vps, selos_por_brinde:spb }); await loadBase(); toast("Ajustes salvos"); viewAjustes(); }); });
   $("#cpl").addEventListener("click", () => copyText(customerLink()));
   const rst = $("#rst"); if (rst) rst.addEventListener("click", () => { if (!rst.dataset.c) { rst.dataset.c = 1; rst.textContent = "Toque de novo para confirmar"; return; } api.reset(); S.cart = { itens:{}, brindes:{}, cliente:null, forma:"Pix" }; loadBase().then(() => { toast("Dados de exemplo restaurados"); viewAjustes(); }); });
   const out = $("#out"); if (out) out.addEventListener("click", async () => { await api.signOut(); location.hash = ""; });
